@@ -18,9 +18,10 @@ from pptx.enum.shapes import MSO_SHAPE
 from google import genai
 from google.genai import errors
 
-# دالة الاستدعاء مع التراجع الأسي وسلسلة النماذج الاحتياطية لتفادي ضغط الخوادم
+# دالة الاستدعاء مع معالجة ضغط الخوادم وسلسلة النماذج الرسمية الدقيقة
 def generate_with_fallback(client, prompt):
-    models = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-3.6-flash"]
+    # استخدام أسماء النماذج المعتمدة والرسمية
+    models = ["gemini-2.5-flash", "gemini-2.5-pro"]
     for model_name in models:
         print(f"[*] Calling Gemini via model: {model_name}...")
         for attempt in range(1, 4):
@@ -35,10 +36,12 @@ def generate_with_fallback(client, prompt):
             except (errors.ServerError, errors.APIError, Exception) as e:
                 print(f"[!] Warning on {model_name}: {str(e)[:70]}...")
                 if attempt < 3:
-                    time.sleep((2 ** attempt) + random.uniform(1.0, 2.5))
+                    time.sleep((2 ** attempt) + random.uniform(1.5, 3.0))
     return None
 
 def clean_json_response(raw_text):
+    if not raw_text:
+        return "[]"
     text = raw_text.strip()
     if text.startswith("```json"):
         text = text[7:]
@@ -58,7 +61,7 @@ def create_deck(filename, title_theme, subtitle_theme, slides_data, primary_rgb,
     # 1. Title Slide
     slide_title = prs.slides.add_slide(blank_slide_layout)
     
-    # Top bar banner
+    # Top banner
     banner = slide_title.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(0.4))
     banner.fill.solid()
     banner.fill.fore_color.rgb = primary_rgb
@@ -222,6 +225,9 @@ Ensure content is rigorous, highly informative, and enterprise-grade. Output ONL
 
 print("Generating content for Deck 1 (AI Governance)...")
 ai_content_raw = generate_with_fallback(client, prompt_ai)
+if not ai_content_raw:
+    raise ValueError("Failed to retrieve AI content from models.")
+
 ai_data = json.loads(clean_json_response(ai_content_raw))
 
 file_ai = f"AI_Governance_Maturity_Mastery_{today_str}.pptx"
@@ -251,6 +257,9 @@ Ensure content is rich in information and enterprise-grade. Output ONLY the raw 
 
 print("Generating content for Deck 2 (Data Governance & DAMA)...")
 data_content_raw = generate_with_fallback(client, prompt_data)
+if not data_content_raw:
+    raise ValueError("Failed to retrieve Data content from models.")
+
 data_data = json.loads(clean_json_response(data_content_raw))
 
 file_data = f"Data_Governance_DAMA_Maturity_{today_str}.pptx"
