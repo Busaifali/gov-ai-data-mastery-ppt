@@ -1,0 +1,30 @@
+name: Daily Executive PowerPoint Decks
+
+on:
+  schedule:
+    # يعمل يومياً في تمام الساعة 01:30 UTC (الساعة 05:30 صباحاً بتوقيت الإمارات)
+    - cron: '30 1 * * *'
+  workflow_dispatch: # زر التشغيل اليدوي الفوري للتجربة بأي وقت
+
+jobs:
+  build-and-send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Generate and Send Decks
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python main.py
